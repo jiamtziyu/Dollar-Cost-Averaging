@@ -131,8 +131,8 @@ test_share_value = col2.number_input(
     value=1.00
 )
 test_total_value = test_num_share * test_share_value
-test_total_fee = min(max(test_num_share * (comm_per_share + platform_fee_per_share), comm_min_per_order +
-                     platform_fee_min_per_order), (test_total_value) * (comm_max_per_order/100 + platform_fee_max_per_order/100))
+test_total_fee = max(comm_min_per_order + platform_fee_min_per_order, min(max(test_num_share * (comm_per_share + platform_fee_per_share), comm_min_per_order +
+                     platform_fee_min_per_order), (test_total_value) * (comm_max_per_order/100 + platform_fee_max_per_order/100)))
 
 st.markdown(
     f"The total value for this trade is: **:blue[${test_total_value:,.2f}]**")
@@ -147,8 +147,8 @@ st.divider()
 st.write(f"### Historical Price of ${ticker}")
 
 
-start_date = str(year_start) + "-" + get_month_number(month_start) + "-01"
-end_date = str(year_end) + "-" + get_month_number(month_end) + "-01"
+start_date = str(year_start) + "-" + str(get_month_number(month_start)) + "-01"
+end_date = str(year_end) + "-" + str(get_month_number(month_end)) + "-01"
 historical_data = download_ticker_data(ticker, start_date, end_date)
 
 
@@ -173,16 +173,16 @@ st.write(f"### Visualization of {interval} DCA into ${ticker}")
 dca_data = dollar_cost_average_strategy(historical_data, interval, investment, comm_per_share, comm_min_per_order,
                                         comm_max_per_order, platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order)
 
-close_price_data = dca_data[["Date", "Total Invested", "Total"]]
+close_price_data = dca_data[["Date", "Total Invested", "Portfolio Value"]]
 close_price_data.set_index("Date", inplace=True)
 
 st.line_chart(
     data=close_price_data,
     use_container_width=True,
-    y=["Total", "Total Invested"]
+    y=["Portfolio Value", "Total Invested"]
 )
 
-dca_data = dca_data[dca_data["Price Bought At"] != 0]
+dca_data = dca_data[dca_data["Price Bought"] != 0]
 
 st.dataframe(
     data=dca_data,
@@ -192,49 +192,46 @@ st.dataframe(
 
 st.divider()
 
-# Chart
-st.write(f"### Other Investment Data")
-
-total_fees_paid = 5000
-
-st.metric(
-    label="Total Fees Paid",
-    value=f"${total_fees_paid:,.2f}"
-)
-
-st.divider()
-
-# TODO: compute dollar cost averaging strategy
-# Chart
-st.write(f"### ${ticker} DCA Table")
-
-
-st.divider()
 
 # Performance
 st.write(f"### ${ticker} DCA Performance")
 
-percentage_gain = 200
-total_gain = 20000
-final_portfolio_value = 40000
+total_invested = dca_data['Total Invested'].iloc[-1]
+percentage_gain = dca_data['Portfolio/Cash'].iloc[-1] - 1
+final_portfolio_value = dca_data['Portfolio Value'].iloc[-1]
+total_gain = final_portfolio_value - dca_data['Total Cash'].iloc[-1]
+total_period = (year_end - year_start) * 12 + \
+    (get_month_number(month_end) - get_month_number(month_start))
+annualized_gain = (1+percentage_gain)**(1/(total_period/12))-1
 
 col1, col2 = st.columns(2)
 
 col1.metric(
     label="Total Invested",
-    value=f"${total_invested:,.0f}"
-)
-col2.metric(
-    label="Percentage Gain",
-    value=f"{percentage_gain:,.2f}%"
+    value=f"${total_invested:,.0f}",
 )
 col1.metric(
-    label="Total Gain",
-    value=f"${total_gain:,.2f}"
+    label="Percentage Gain",
+    value=f"{percentage_gain*100:,.2f}%",
 )
 col2.metric(
     label="Final Portfolio Value",
-    value=f"${final_portfolio_value:,.2f}"
+    value=f"${final_portfolio_value:,.2f}",
+    delta=f"{total_gain:,.2f}"
+)
+col2.metric(
+    label="Annualized Gain",
+    value=f"{annualized_gain*100:,.2f}%",
+)
+
+# Chart
+st.write(f"##### Other Investment Data")
+
+total_fees_paid = dca_data["Fees Paid"].sum()
+
+st.metric(
+    label="Total Fees",
+    value=f"${total_fees_paid:,.2f}"
 )
 
 st.divider()

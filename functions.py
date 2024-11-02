@@ -21,18 +21,18 @@ def download_ticker_data(ticker, start_date, end_date):
 def get_month_number(month_name):
 
     month_mapping = {
-        "January": "01",
-        "February": "02",
-        "March": "03",
-        "April": "04",
-        "May": "05",
-        "June": "06",
-        "July": "07",
-        "August": "08",
-        "September": "09",
-        "October": "10",
-        "November": "11",
-        "December": "12"
+        "January": 1,
+        "February": 2,
+        "March": 3,
+        "April": 4,
+        "May": 5,
+        "June": 6,
+        "July": 7,
+        "August": 8,
+        "September": 9,
+        "October": 10,
+        "November": 11,
+        "December": 12
     }
 
     return month_mapping.get(month_name, "Invalid month name")
@@ -64,6 +64,7 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
         price_bought_at = 0
         num_shares_bought = 0
         investing_amount = 0
+        fees_incurred = 0
 
         # Increasing cash balance from pay check
         if index % 20 == 0 and index != 0:
@@ -74,9 +75,11 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
         if index % get_interval_mapping(interval) == 0 and cash_balance != 0:
             investing_amount = investment / \
                 (20 / get_interval_mapping(interval))
-            fees_incurred = 0
+            num_shares_rough = investing_amount / price
+            fees_incurred = max(comm_min_per_order + platform_fee_min_per_order, min(max(num_shares_rough * (comm_per_share + platform_fee_per_share), comm_min_per_order +
+                                    platform_fee_min_per_order), (investing_amount) * (comm_max_per_order/100 + platform_fee_max_per_order/100)))
             cash_balance -= investing_amount
-            invested_amount += investing_amount - fees_incurred
+            invested_amount += investing_amount
             investing_amount -= fees_incurred
             num_shares += investing_amount / price
             price_bought_at = price
@@ -89,14 +92,13 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
         except ZeroDivisionError:
             t_c = 1
 
-        performance_data.append((date, price_bought_at, original_cash, cash_balance, invested_amount, num_shares * price, total,
-                                t_c, investing_amount, num_shares_bought))
+        performance_data.append((date, price_bought_at, num_shares_bought, fees_incurred, original_cash, cash_balance, invested_amount, num_shares * price, total,
+                                t_c))
 
-    performance_data = pd.DataFrame(performance_data, columns=['Date', 'Price Bought At', 'Total Invested', 'Cash Balance', 'Capital',
-                                                               'Investment', 'Total', 'Total/Cash', 'Investing Amount',
-                                                               'Num Shares Bought'])
+    performance_data = pd.DataFrame(performance_data, columns=['Date', 'Price Bought', 'Shares Bought', 'Fees Paid', 'Total Cash', 'Cash Balance', 'Total Invested',
+                                                               'Investment Value', 'Portfolio Value', 'Portfolio/Cash'])
 
-    performance_data['Performance'] = performance_data['Total/Cash'] - 1
+    performance_data['Performance'] = performance_data['Portfolio/Cash'] - 1
 
     print("Basic DCA Strategy completed.")
 
