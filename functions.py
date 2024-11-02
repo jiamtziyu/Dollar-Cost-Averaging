@@ -37,6 +37,7 @@ def get_month_number(month_name):
 
     return month_mapping.get(month_name, "Invalid month name")
 
+
 def get_interval_mapping(interval):
 
     interval_mapping = {
@@ -45,8 +46,9 @@ def get_interval_mapping(interval):
         "quarterly": 60,
         "biannually": 120
     }
-    
+
     return interval_mapping.get(interval.lower(), "Invalid frequency")
+
 
 def dollar_cost_average_strategy(data, interval, investment, comm_per_share, comm_min_per_order, comm_max_per_order, platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order):
 
@@ -70,7 +72,8 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
 
         # Decrease cash balance to invest
         if index % get_interval_mapping(interval) == 0 and cash_balance != 0:
-            investing_amount = investment / (20 / get_interval_mapping(interval))
+            investing_amount = investment / \
+                (20 / get_interval_mapping(interval))
             fees_incurred = 0
             cash_balance -= investing_amount
             invested_amount += investing_amount - fees_incurred
@@ -86,16 +89,15 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
         except ZeroDivisionError:
             t_c = 1
 
-        performance_data.append((date, original_cash, cash_balance, invested_amount, num_shares * price, total,
-                                t_c, investing_amount, price_bought_at, num_shares_bought))
+        performance_data.append((date, price_bought_at, original_cash, cash_balance, invested_amount, num_shares * price, total,
+                                t_c, investing_amount, num_shares_bought))
 
-    performance_data = pd.DataFrame(performance_data, columns=['Date', 'Original Cash', 'Cash Balance', 'Capital',
+    performance_data = pd.DataFrame(performance_data, columns=['Date', 'Price Bought At', 'Total Invested', 'Cash Balance', 'Capital',
                                                                'Investment', 'Total', 'Total/Cash', 'Investing Amount',
-                                                               'Price Bought At', 'Num Shares Bought'])
+                                                               'Num Shares Bought'])
 
     performance_data['Performance'] = performance_data['Total/Cash'] - 1
 
     print("Basic DCA Strategy completed.")
 
     return performance_data
-

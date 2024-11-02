@@ -131,7 +131,8 @@ test_share_value = col2.number_input(
     value=1.00
 )
 test_total_value = test_num_share * test_share_value
-test_total_fee = min(max(test_num_share * (comm_per_share + platform_fee_per_share), comm_min_per_order + platform_fee_min_per_order), (test_total_value) * (comm_max_per_order/100 + platform_fee_max_per_order/100))
+test_total_fee = min(max(test_num_share * (comm_per_share + platform_fee_per_share), comm_min_per_order +
+                     platform_fee_min_per_order), (test_total_value) * (comm_max_per_order/100 + platform_fee_max_per_order/100))
 
 st.markdown(
     f"The total value for this trade is: **:blue[${test_total_value:,.2f}]**")
@@ -172,14 +173,22 @@ st.write(f"### Visualization of {interval} DCA into ${ticker}")
 dca_data = dollar_cost_average_strategy(historical_data, interval, investment, comm_per_share, comm_min_per_order,
                                         comm_max_per_order, platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order)
 
-close_price_data = dca_data[["Date", "Original Cash", "Total"]]
+close_price_data = dca_data[["Date", "Total Invested", "Total"]]
 close_price_data.set_index("Date", inplace=True)
 
 st.line_chart(
     data=close_price_data,
     use_container_width=True,
-    y=["Total", "Original Cash"]
+    y=["Total", "Total Invested"]
 )
+
+dca_data = dca_data[dca_data["Price Bought At"] != 0]
+
+st.dataframe(
+    data=dca_data,
+    use_container_width=True,
+    hide_index=True,
+    height=150)
 
 st.divider()
 
@@ -199,9 +208,6 @@ st.divider()
 # Chart
 st.write(f"### ${ticker} DCA Table")
 
-total_invested = 0
-# for index, row in historical_data.iterrows():
-#     pass
 
 st.divider()
 
