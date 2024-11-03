@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import yfinance as yf
 from functions import *
-
+st.set_page_config(layout="centered")
 # Page title
 st.title("Dollar Cost Averaging Tool")
 st.divider()
@@ -159,6 +159,7 @@ st.line_chart(
     data=close_price_data,
     use_container_width=True
 )
+
 st.dataframe(
     data=historical_data,
     use_container_width=True,
@@ -217,7 +218,6 @@ col1.metric(
 col2.metric(
     label="Final Portfolio Value",
     value=f"${final_portfolio_value:,.2f}",
-    delta=f"{total_gain:,.2f}"
 )
 col2.metric(
     label="Annualized Gain",
@@ -235,3 +235,22 @@ st.metric(
 )
 
 st.divider()
+
+st.write(f"### Performance across Intervals")
+
+intervals = ["Weekly", "Monthly", "Quarterly", "Biannually"]
+
+
+compare_data = compare_interval(intervals, historical_data, investment, comm_per_share, comm_min_per_order,
+                                comm_max_per_order, platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order)
+compare_data.set_index("Date", inplace=True)
+
+st.line_chart(
+    data=compare_data,
+    use_container_width=True,
+)
+
+st.dataframe(
+    data=compare_data,
+    use_container_width=True,
+    height=150)

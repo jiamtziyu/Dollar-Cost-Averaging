@@ -58,9 +58,9 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
     original_cash = 0.0
     performance_data = []
 
-    for index, data in data[0:].iterrows():
-        date = data['Date']
-        price = data['Close']
+    for index, row in data.iterrows():
+        date = row['Date']
+        price = row['Close']
         price_bought_at = 0
         num_shares_bought = 0
         investing_amount = 0
@@ -77,7 +77,7 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
                 (20 / get_interval_mapping(interval))
             num_shares_rough = investing_amount / price
             fees_incurred = max(comm_min_per_order + platform_fee_min_per_order, min(max(num_shares_rough * (comm_per_share + platform_fee_per_share), comm_min_per_order +
-                                    platform_fee_min_per_order), (investing_amount) * (comm_max_per_order/100 + platform_fee_max_per_order/100)))
+                                                                                         platform_fee_min_per_order), (investing_amount) * (comm_max_per_order/100 + platform_fee_max_per_order/100)))
             cash_balance -= investing_amount
             invested_amount += investing_amount
             investing_amount -= fees_incurred
@@ -100,6 +100,34 @@ def dollar_cost_average_strategy(data, interval, investment, comm_per_share, com
 
     performance_data['Performance'] = performance_data['Portfolio/Cash'] - 1
 
-    print("Basic DCA Strategy completed.")
-
     return performance_data
+
+
+def compare_interval(intervals, input_data, investment, comm_per_share, comm_min_per_order, comm_max_per_order, platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order):
+
+    # Initialize an empty DataFrame to store the merged results
+    result_df = pd.DataFrame()
+
+    for interval in intervals:
+        data = dollar_cost_average_strategy(input_data, interval, investment, comm_per_share, comm_min_per_order, comm_max_per_order,
+                                            platform_fee_per_share, platform_fee_min_per_order, platform_fee_max_per_order)
+        filtered_data = data[["Date", "Performance"]]
+
+        # Rename columns to avoid overwriting during merges
+        filtered_data = filtered_data.rename(columns={
+            "Performance": f"{interval}"
+        })
+
+        # Merge `filtered_data` with `result_df` on "Date" column
+        if result_df.empty:
+            # First interval, initialize `result_df` with `filtered_data`
+            result_df = filtered_data
+        else:
+            # Merge with existing data on "Date"
+            result_df = pd.merge(result_df, filtered_data,
+                                 on="Date", how="outer")
+
+    # Sort the final result by Date, if necessary
+    result_df = result_df.sort_values(by="Date").reset_index(drop=True)
+
+    return result_df
