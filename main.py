@@ -148,7 +148,6 @@ st.area_chart(
 
 dca_data = dca_data[dca_data["Price Bought"] != 0]
 
-st.write(f"📊 DCA Performance Table")
 
 st.dataframe(
     data=dca_data,
@@ -173,10 +172,7 @@ st.divider()
 #     label="Percentage Gain",
 #     value=f"{percentage_gain*100:,.2f}%",
 # )
-# col1.metric(
-#     label="Loss Frequency",
-#     value=f"{loss_frequency*100:,.2f}%",
-# )
+
 # col2.metric(
 #     label="Final Portfolio Value",
 #     value=f"${final_portfolio_value:,.2f}",
@@ -213,7 +209,6 @@ st.line_chart(
     data=adjusted_data,
     use_container_width=True,
 )
-
 
 st.dataframe(
     data=compare_data,
