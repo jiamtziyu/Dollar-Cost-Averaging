@@ -117,32 +117,44 @@ annualized_gain = (1+percentage_gain)**(1/(total_period/12))-1
 loss_frequency = (dca_data['Performance'] < 0).mean()
 
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 col1.metric(
     label="Total Invested",
     value=f"${total_invested:,.0f}",
 )
 col2.metric(
-    label="Percentage Gain",
-    value=f"{percentage_gain*100:,.2f}%",
-)
-col3.metric(
     label="Total Gain",
     value=f"${total_gain:,.2f}",
 )
-col4.metric(
+col3.metric(
     label="Final Portfolio Value",
     value=f"${final_portfolio_value:,.2f}",
 )
 
-close_price_data = dca_data[["Date", "Total Invested", "Portfolio Value"]]
+col1, col2, col3 = st.columns(3)
+
+col1.metric(
+    label="Percentage Gain",
+    value=f"{percentage_gain*100:,.2f}%",
+)
+col2.metric(
+    label="Annualized Gain",
+    value=f"{annualized_gain*100:,.2f}%",
+)
+col3.metric(
+    label="Loss Frequency",
+    value=f"{loss_frequency*100:.2f}%",
+    help="Percentage of days the portfolio value falls below the original cash investment"
+)
+
+close_price_data = dca_data[["Date", "Portfolio Value", "Total Cash"]]
 close_price_data.set_index("Date", inplace=True)
 
-st.area_chart(
+st.line_chart(
     data=close_price_data,
     use_container_width=True,
-    y=["Portfolio Value", "Total Invested"],
+    y=["Portfolio Value", "Total Cash"],
     height=400
 )
 
@@ -182,17 +194,6 @@ st.divider()
 #     value=f"{annualized_gain*100:,.2f}%",
 # )
 
-# # Chart
-# st.write(f"##### Other Investment Data")
-
-# total_fees_paid = dca_data["Fees Paid"].sum()
-
-# st.metric(
-#     label="Total Fees",
-#     value=f"${total_fees_paid:,.2f}"
-# )
-
-# st.divider()
 
 st.write(f"### Relative Performance Across Other Intervals")
 
@@ -233,15 +234,34 @@ st.dataframe(
     height=150)
 
 st.divider()
-st.write("##### Fees Quick Calculation")
+
+# Chart
+st.write(f"### Other Investment Data")
+
+total_fees_paid = dca_data["Fees Paid"].sum()
 
 col1, col2 = st.columns(2)
-test_num_share = col1.number_input(
+
+col1.metric(
+    label="Total Fees",
+    value=f"${total_fees_paid:,.2f}"
+)
+
+col1.metric(
+    label="Proportion To Cash",
+    value=f"{total_fees_paid/total_invested*100:.2f}%"
+)
+
+
+col2.write("##### Fees Quick Calculation")
+
+col3, col4 = col2.columns(2)
+test_num_share = col3.number_input(
     label="Num of Shares",
     min_value=0.00,
     value=1.00
 )
-test_share_value = col2.number_input(
+test_share_value = col4.number_input(
     label="Price/Share",
     min_value=0.00,
     value=1.00
@@ -250,7 +270,8 @@ test_total_value = test_num_share * test_share_value
 test_total_fee = max(comm_min_per_order + platform_fee_min_per_order, min(max(test_num_share * (comm_per_share + platform_fee_per_share), comm_min_per_order +
                      platform_fee_min_per_order), (test_total_value) * (comm_max_per_order/100 + platform_fee_max_per_order/100)))
 
-st.markdown(
+col2.markdown(
     f"The total value for this trade is: **:blue[${test_total_value:,.2f}]**")
-st.markdown(
+col2.markdown(
     f"The total fee for this trade is: **:red[${test_total_fee:,.2f}]**")
+
