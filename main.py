@@ -151,11 +151,11 @@ col3.metric(
 close_price_data = dca_data[["Date", "Portfolio Value", "Total Cash"]]
 close_price_data.set_index("Date", inplace=True)
 
-st.line_chart(
+st.area_chart(
     data=close_price_data,
     use_container_width=True,
     y=["Portfolio Value", "Total Cash"],
-    height=400
+    height=400,
 )
 
 dca_data = dca_data[dca_data["Price Bought"] != 0]
